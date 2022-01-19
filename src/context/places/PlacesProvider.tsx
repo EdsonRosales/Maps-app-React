@@ -1,6 +1,7 @@
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { PlacesContext } from "./PlacesContext";
 import { placesReducer } from "./PlacesReducer";
+import { getUserLocation } from "../../helpers/index"
 
 export interface PlacesState {
     isLoading: boolean;
@@ -20,6 +21,12 @@ interface Props {
 export const PlacesProvider = ({ children }: Props) => {
 
     const [state, dispatch] = useReducer(placesReducer, INITIAL_STATE);
+    
+    //Here's where I obtain the geolocation of the user with my helper getUserLocationS
+    useEffect(() => {
+        getUserLocation()
+            .then( lngLat => dispatch({ type: 'setUserLocation', payload: lngLat }))
+    }, []);
     
 
     return (
