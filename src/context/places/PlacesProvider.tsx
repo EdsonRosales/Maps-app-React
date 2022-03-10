@@ -3,16 +3,21 @@ import { PlacesContext } from "./PlacesContext";
 import { placesReducer } from "./PlacesReducer";
 import { getUserLocation } from "../../helpers/index"
 import { searchApi } from "../../apis";
+import { Feature, PlacesResponse } from "../../interfaces/places";
 
 export interface PlacesState {
     isLoading: boolean;
-    userLocation?: [ number, number ],
+    userLocation?: [ number, number ];
+    isLoadingPlaces: boolean;
+    places: Feature[];
 }
 
 //This is how looks my state for now...
 const INITIAL_STATE: PlacesState = {
     isLoading: true,
-    userLocation: undefined
+    userLocation: undefined,
+    isLoadingPlaces: false,
+    places: [],
 }
 
 interface Props {
@@ -30,19 +35,23 @@ export const PlacesProvider = ({ children }: Props) => {
     }, []);
 
     //This function helps me to dispatch a searching query to the API of places in Mapbox
-    const searchPlacesByTerm = async( query: string ) => {
+    const searchPlacesByTerm = async( query: string ): Promise<Feature[]> => {
         if (query.length === 0) return []; //Todo: Clean state
         if( !state.userLocation ) throw new Error('No hay ubicación del usuario');
 
-        const resp = await searchApi.get(`/${ query }.json`, {
+        dispatch({ type: 'setLoadingPlaces' });
+
+        //After the first dispatch, in this moment I start to load the Http request data
+
+        const resp = await searchApi.get<PlacesResponse>(`/${ query }.json`, {
             params: {
                 proximity: state.userLocation.join(',')
             }
         });
 
-        console.log(resp.data);
-
-        return resp.data;
+        //When the resp ends, I need to load mi response in other action with my second dispatch
+        dispatch({ type: 'setPlaces', payload: resp.data.features });
+        return resp.data.features;
     }
     
 
