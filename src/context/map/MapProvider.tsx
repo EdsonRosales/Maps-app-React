@@ -3,6 +3,8 @@ import { Map, Marker, Popup } from "mapbox-gl";
 import { MapContext } from "./MapContext";
 import { mapReducer } from "./mapReducer";
 import { PlacesContext } from "../";
+import { directionsApi } from "../../apis";
+import { DirectionsResponse } from "../../interfaces/directions";
 
 export interface MapState {
     isMapReady: boolean;
@@ -71,12 +73,27 @@ export const MapProvider = ({ children }: Props) => {
         dispatch({ type: 'setMap', payload: map })
     }
 
+    const getRouteBetweenPoints = async( start: [number, number], end: [number, number] ) => {
+
+        const resp = await directionsApi.get<DirectionsResponse>(`/${ start.join(',') };${ end.join(',') }`);
+        const { distance, duration, geometry } = resp.data.routes[0];
+
+        //Convert the distance in Kilometers
+        let km = distance / 1000;
+            km = Math.round( km * 100 );
+            km /= 100;
+        
+        const minutes = Math.floor( duration / 60 );
+        console.log({ km, minutes });
+    }
+
     return (
         <MapContext.Provider value={{
             ...state,
 
             //Methods
             setMap,
+            getRouteBetweenPoints,
         }}>
             { children }
         </MapContext.Provider>
